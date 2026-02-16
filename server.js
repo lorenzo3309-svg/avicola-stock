@@ -22,7 +22,17 @@ app.options("*", cors(corsOptions));
 app.use(express.json());
 
 const SECRET = process.env.SECRET || "clave_super_secreta";
+const cs = process.env.DATABASE_URL;
+console.log("DB_URL exists:", !!cs);
 
+try {
+  const u = new URL(cs);
+  console.log("DB host:", u.hostname);
+  console.log("DB port:", u.port);
+  console.log("DB user:", decodeURIComponent(u.username));
+} catch (e) {
+  console.log("DATABASE_URL inválida o vacía");
+}
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -180,5 +190,6 @@ app.get('/excel', auth, async(req,res)=>{
 
 const PORT=process.env.PORT||3000;
 app.listen(PORT,()=>console.log("Sistema avícola online"));
+
 
 
