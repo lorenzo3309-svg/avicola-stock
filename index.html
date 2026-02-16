@@ -26,7 +26,7 @@
 
 <div id="loginCard" class="card">
   <h3>Ingresar</h3>
-  <input id="nombre" placeholder="Usuario (ej: Lorenzo fabian)" />
+  <input id="usuario" placeholder="Usuario (ej: Lorenzo fabian)" />
   <input id="password" type="password" placeholder="Contraseña" />
   <button onclick="login()">Entrar</button>
   <div id="loginMsg" class="small"></div>
@@ -97,7 +97,7 @@
   document.getElementById("api").textContent = API;
 
   let token = localStorage.getItem("token") || "";
-  let nombreActual = localStorage.getItem("nombre") || "";
+  let nombreActual = localStorage.getItem("usuario") || "";
 
   function setAuthUI() {
     if(token){
@@ -113,13 +113,13 @@
   }
 
   async function login(){
-    const nombre = document.getElementById("nombre").value.trim();
+    const usuario = document.getElementById("usuario").value.trim();
     const password = document.getElementById("password").value;
 
     const r = await fetch(API + "/login",{
       method:"POST",
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({usuario:nombre,password})
+      body: JSON.stringify({usuario,password})
     });
 
     if(!r.ok){
@@ -129,9 +129,9 @@
 
     const data = await r.json();
     token = data.token;
-    nombreActual = nombre;
+    nombreActual = usuario;
     localStorage.setItem("token", token);
-    localStorage.setItem("nombre", nombreActual);
+    localStorage.setItem("usuario", nombreActual);
     document.getElementById("loginMsg").innerHTML = "<span class='ok'>OK</span>";
     setAuthUI();
   }
@@ -232,6 +232,7 @@
 </script>
 </body>
 </html>
+
 
 
 
