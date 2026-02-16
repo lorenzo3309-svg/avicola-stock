@@ -41,22 +41,41 @@ function auth(req,res,next){
 
 app.get('/', (req,res)=>res.send("API Avicola funcionando"));
 
-app.post('/login', async(req,res)=>{
-  const {nombre,password}=req.body;
+app.post("/login", async (req, res) => {
+  try {
+    const { usuario, password } = req.body;
 
-  const r=await pool.query('SELECT * FROM usuarios WHERE nombre=$1',[nombre]);
-  if(!r.rows.length) return res.status(401).send("Usuario no existe");
+    if (!usuario || !password) {
+      return res.status(400).json({ error: "Datos incompletos" });
+    }
 
-  const ok=await bcrypt.compare(password,r.rows[0].password);
-  if(!ok) return res.status(401).send("Contraseña incorrecta");
+    const result = await pool.query(
+      "SELECT * FROM usuarios WHERE usuario = $1",
+      [usuario]
+    );
 
-  const token=jwt.sign(
-    {id:r.rows[0].id,rol:r.rows[0].rol},
-    SECRET,
-    {expiresIn:'7d'}
-  );
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: "Usuario no encontrado" });
+    }
 
-  res.send({token});
+    const user = result.rows[0];
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Contraseña incorrecta" });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, usuario: user.usuario },
+      SECRET,
+      { expiresIn: "8h" }
+    );
+
+    res.json({ token });
+  } catch (error) {
+    console.error("❌ Error en /login:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 });
 
 app.post('/movimiento', auth, async(req,res)=>{
@@ -161,4 +180,5 @@ app.get('/excel', auth, async(req,res)=>{
 
 const PORT=process.env.PORT||3000;
 app.listen(PORT,()=>console.log("Sistema avícola online"));
+
 
