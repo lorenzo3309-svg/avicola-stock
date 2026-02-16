@@ -18,12 +18,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
-const bcrypt = require("bcrypt");
-
-bcrypt.hash("Tilcor123", 10).then(hash => {
-  console.log(hash);
-});
-
 app.use(express.json());
 
 const SECRET = process.env.SECRET || "clave_super_secreta";
@@ -195,6 +189,7 @@ app.get('/excel', auth, async(req,res)=>{
 
 const PORT=process.env.PORT||3000;
 app.listen(PORT,()=>console.log("Sistema avícola online"));
+
 
 
 
