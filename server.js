@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 const ExcelJS = require('exceljs');
 
 const app = express();
-const app = express();
 
 const corsOptions = {
   origin: "https://soft-begonia-e85396.netlify.app",
