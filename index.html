@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Control Depósito Avícola</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;max-width:520px;margin:0 auto;padding:16px}
+    h1{font-size:20px;margin:8px 0 12px}
+    .card{border:1px solid #ddd;border-radius:12px;padding:12px;margin:10px 0}
+    input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;margin:6px 0;font-size:16px}
+    button{cursor:pointer}
+    .row{display:flex;gap:10px}
+    .row > *{flex:1}
+    .ok{color:green}
+    .bad{color:#b00020}
+    .small{font-size:12px;color:#555}
+    table{width:100%;border-collapse:collapse}
+    td,th{border-bottom:1px solid #eee;padding:6px;text-align:left;font-size:14px}
+  </style>
+</head>
+<body>
+
+<h1>Control Depósito Avícola</h1>
+<div class="small">Backend: <span id="api"></span></div>
+
+<div id="loginCard" class="card">
+  <h3>Ingresar</h3>
+  <input id="nombre" placeholder="Usuario (ej: Lorenzo)" />
+  <input id="password" type="password" placeholder="Contraseña" />
+  <button onclick="login()">Entrar</button>
+  <div id="loginMsg" class="small"></div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="card">
+    <div class="small">Conectado como <b id="who"></b></div>
+    <button onclick="logout()">Cerrar sesión</button>
+  </div>
+
+  <div class="card">
+    <h3>Registrar Movimiento</h3>
+    <select id="categoria">
+      <option>Jumbo</option>
+      <option>Extra</option>
+      <option>Grande</option>
+      <option>Mediano</option>
+      <option>Chico</option>
+      <option>Bolita</option>
+      <option>Bolita Primera Postura</option>
+    </select>
+    <input id="cantidad" type="number" placeholder="Cantidad (cajones)" />
+    <div class="row">
+      <button onclick="mov('entrada')">Entrada</button>
+      <button onclick="mov('salida')">Salida</button>
+    </div>
+    <div id="movMsg" class="small"></div>
+  </div>
+
+  <div class="card">
+    <h3>Cargar Conteo Físico</h3>
+    <select id="catConteo">
+      <option>Jumbo</option>
+      <option>Extra</option>
+      <option>Grande</option>
+      <option>Mediano</option>
+      <option>Chico</option>
+      <option>Bolita</option>
+      <option>Bolita Primera Postura</option>
+    </select>
+    <input id="cantConteo" type="number" placeholder="Cantidad contada (cajones)" />
+    <button onclick="conteo()">Guardar conteo</button>
+    <div id="conteoMsg" class="small"></div>
+  </div>
+
+  <div class="card">
+    <h3>Stock Actual</h3>
+    <button onclick="cargarStock()">Actualizar</button>
+    <div id="stock"></div>
+  </div>
+
+  <div class="card">
+    <h3>Diferencias (Teórico vs Físico)</h3>
+    <button onclick="cargarDif()">Actualizar</button>
+    <div id="dif"></div>
+  </div>
+
+  <div class="card">
+    <h3>Descargas</h3>
+    <button onclick="descargarExcel()">Descargar Excel</button>
+    <div class="small">El Excel se descarga con los movimientos.</div>
+  </div>
+</div>
+
+<script>
+  const API = "https://avicola-stock.onrender.com"; // ✅ tu backend
+  document.getElementById("api").textContent = API;
+
+  let token = localStorage.getItem("token") || "";
+  let nombreActual = localStorage.getItem("nombre") || "";
+
+  function setAuthUI() {
+    if(token){
+      document.getElementById("loginCard").style.display="none";
+      document.getElementById("app").style.display="block";
+      document.getElementById("who").textContent = nombreActual || "usuario";
+      cargarStock();
+      cargarDif();
+    } else {
+      document.getElementById("loginCard").style.display="block";
+      document.getElementById("app").style.display="none";
+    }
+  }
+
+  async function login(){
+    const nombre = document.getElementById("nombre").value.trim();
+    const password = document.getElementById("password").value;
+
+    const r = await fetch(API + "/login",{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({nombre,password})
+    });
+
+    if(!r.ok){
+      document.getElementById("loginMsg").innerHTML = "<span class='bad'>Usuario/contraseña incorrectos</span>";
+      return;
+    }
+
+    const data = await r.json();
+    token = data.token;
+    nombreActual = nombre;
+    localStorage.setItem("token", token);
+    localStorage.setItem("nombre", nombreActual);
+    document.getElementById("loginMsg").innerHTML = "<span class='ok'>OK</span>";
+    setAuthUI();
+  }
+
+  function logout(){
+    token="";
+    localStorage.removeItem("token");
+    setAuthUI();
+  }
+
+  async function mov(tipo){
+    const categoria = document.getElementById("categoria").value;
+    const cantidad = Number(document.getElementById("cantidad").value);
+
+    if(!cantidad || cantidad<=0){
+      document.getElementById("movMsg").innerHTML = "<span class='bad'>Poné una cantidad válida</span>";
+      return;
+    }
+
+    const r = await fetch(API + "/movimiento",{
+      method:"POST",
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization': token
+      },
+      body: JSON.stringify({categoria,cantidad,tipo})
+    });
+
+    if(!r.ok){
+      document.getElementById("movMsg").innerHTML = "<span class='bad'>Error guardando movimiento</span>";
+      return;
+    }
+
+    document.getElementById("movMsg").innerHTML = "<span class='ok'>Guardado ✅</span>";
+    document.getElementById("cantidad").value="";
+    cargarStock();
+    cargarDif();
+  }
+
+  async function conteo(){
+    const categoria = document.getElementById("catConteo").value;
+    const cantidad = Number(document.getElementById("cantConteo").value);
+
+    if(!cantidad && cantidad!==0){
+      document.getElementById("conteoMsg").innerHTML = "<span class='bad'>Poné una cantidad</span>";
+      return;
+    }
+
+    const r = await fetch(API + "/conteo",{
+      method:"POST",
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization': token
+      },
+      body: JSON.stringify({categoria,cantidad})
+    });
+
+    if(!r.ok){
+      document.getElementById("conteoMsg").innerHTML = "<span class='bad'>Error guardando conteo</span>";
+      return;
+    }
+
+    document.getElementById("conteoMsg").innerHTML = "<span class='ok'>Conteo guardado ✅</span>";
+    document.getElementById("cantConteo").value="";
+    cargarDif();
+  }
+
+  async function cargarStock(){
+    const r = await fetch(API + "/stock", {headers:{'Authorization': token}});
+    if(!r.ok){ document.getElementById("stock").innerHTML = "<span class='bad'>Error</span>"; return; }
+    const data = await r.json();
+    let html="<table><tr><th>Categoría</th><th>Stock</th></tr>";
+    data.forEach(x=> html += `<tr><td>${x.categoria}</td><td>${x.stock}</td></tr>`);
+    html+="</table>";
+    document.getElementById("stock").innerHTML = html;
+  }
+
+  async function cargarDif(){
+    const r = await fetch(API + "/diferencias", {headers:{'Authorization': token}});
+    if(!r.ok){ document.getElementById("dif").innerHTML = "<span class='bad'>Error</span>"; return; }
+    const data = await r.json();
+    let html="<table><tr><th>Categoría</th><th>Teórico</th><th>Físico</th><th>Diferencia</th></tr>";
+    data.forEach(x=>{
+      const cls = (Number(x.diferencia)===0) ? "ok" : "bad";
+      html += `<tr><td>${x.categoria}</td><td>${x.teorico}</td><td>${x.fisico}</td><td class="${cls}">${x.diferencia}</td></tr>`;
+    });
+    html+="</table>";
+    document.getElementById("dif").innerHTML = html;
+  }
+
+  function descargarExcel(){
+    // abre descarga (requiere token)
+    window.open(API + "/excel", "_blank");
+    alert("Si no descarga: copiá el link /excel y descargalo desde una pestaña donde estés logueado.");
+  }
+
+  setAuthUI();
+</script>
+</body>
+</html>
