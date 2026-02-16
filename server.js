@@ -6,7 +6,12 @@ const jwt = require('jsonwebtoken');
 const ExcelJS = require('exceljs');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "https://soft-begonia-e85396.netlify.app",
+  methods: ["GET","POST","PUT","DELETE"],
+  allowedHeaders: ["Content-Type","Authorization"]
+}));
+
 app.use(express.json());
 
 const SECRET = process.env.SECRET || "clave_super_secreta";
