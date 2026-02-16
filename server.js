@@ -59,7 +59,7 @@ app.post("/login", async (req, res) => {
     }
 
     const result = await pool.query(
-      "SELECT * FROM usuarios WHERE usuario = $1",
+      "SELECT * FROM public.usuarios WHERE usuario = $1",
       [usuario]
     );
 
@@ -189,6 +189,7 @@ app.get('/excel', auth, async(req,res)=>{
 
 const PORT=process.env.PORT||3000;
 app.listen(PORT,()=>console.log("Sistema avícola online"));
+
 
 
 
