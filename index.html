@@ -222,16 +222,34 @@
     document.getElementById("dif").innerHTML = html;
   }
 
-  function descargarExcel(){
-    // abre descarga (requiere token)
-    window.open(API + "/excel", "_blank");
-    alert("Si no descarga: copiá el link /excel y descargalo desde una pestaña donde estés logueado.");
+  async function descargarExcel(){
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(API + "/excel", {
+    headers: { Authorization: token }
+  });
+
+  if(!res.ok){
+    alert("Error descargando Excel");
+    return;
   }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "stock.xlsx";
+  a.click();
+
+  window.URL.revokeObjectURL(url);
+}
 
   setAuthUI();
 </script>
 </body>
 </html>
+
 
 
 
