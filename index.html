@@ -119,7 +119,7 @@
     const r = await fetch(API + "/login",{
       method:"POST",
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({nombre,password})
+      body: JSON.stringify({usuario:nombre,password})
     });
 
     if(!r.ok){
@@ -232,3 +232,4 @@
 </script>
 </body>
 </html>
+
