@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -10,7 +11,8 @@ const app = express();
 const corsOptions = {
   origin: "https://soft-begonia-e85396.netlify.app",
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+  allowedHeaders: ["Content-Type","Authorization"],
+  credentials: true
 };
 
 app.use(cors(corsOptions));
@@ -159,3 +161,4 @@ app.get('/excel', auth, async(req,res)=>{
 
 const PORT=process.env.PORT||3000;
 app.listen(PORT,()=>console.log("Sistema avícola online"));
+
