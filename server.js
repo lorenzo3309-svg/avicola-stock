@@ -123,27 +123,27 @@ app.get('/stock', auth, async(req,res)=>{
   res.send(r.rows);
 });
 
-app.get('/diferencias', auth, async(req,res)=>{
-  const r=await pool.query(`
-    SELECT m.categoria,
-    SUM(CASE WHEN tipo='entrada' THEN cantidad ELSE 0 END) -
-    SUM(CASE WHEN tipo='salida' THEN cantidad ELSE 0 END) AS teorico,
-    COALESCE(c.contado,0) AS fisico,
-    COALESCE(c.contado,0) -
-    (SUM(CASE WHEN tipo='entrada' THEN cantidad ELSE 0 END) -
-     SUM(CASE WHEN tipo='salida' THEN cantidad ELSE 0 END)) AS diferencia
-    FROM movimientos m
-    LEFT JOIN (
+app.get('/diferencias', auth, async(req,res)=>{  
+  const r=await pool.query(`  
+    SELECT m.categoria,  
+    SUM(CASE WHEN tipo='entrada' THEN cantidad ELSE 0 END) -  
+    SUM(CASE WHEN tipo='salida' THEN cantidad ELSE 0 END) AS teorico,  
+    COALESCE(c.contado,0) AS fisico,  
+    COALESCE(c.contado,0) -  
+    (SUM(CASE WHEN tipo='entrada' THEN cantidad ELSE 0 END) -  
+     SUM(CASE WHEN tipo='salida' THEN cantidad ELSE 0 END)) AS diferencia  
+    FROM movimientos m  
+    LEFT JOIN (  
       SELECT DISTINCT ON (categoria)
-  categoria,
-  cantidad AS contado
-FROM conteos
-ORDER BY categoria, fecha DESC
-    ) c ON m.categoria=c.categoria
-    GROUP BY m.categoria,c.contado
-    ORDER BY m.categoria
-  `);
-  res.send(r.rows);
+        categoria,
+        cantidad AS contado
+      FROM conteos
+      ORDER BY categoria, id DESC
+    ) c ON m.categoria=c.categoria  
+    GROUP BY m.categoria,c.contado  
+    ORDER BY m.categoria  
+  `);  
+  res.send(r.rows);  
 });
 
 app.get('/alertas', auth, async(req,res)=>{
@@ -192,6 +192,7 @@ app.get('/excel', auth, async(req,res)=>{
 
 const PORT=process.env.PORT||3000;
 app.listen(PORT,()=>console.log("Sistema avícola online"));
+
 
 
 
