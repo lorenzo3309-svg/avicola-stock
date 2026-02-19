@@ -134,8 +134,11 @@ app.get('/diferencias', auth, async(req,res)=>{
      SUM(CASE WHEN tipo='salida' THEN cantidad ELSE 0 END)) AS diferencia
     FROM movimientos m
     LEFT JOIN (
-      SELECT categoria,SUM(cantidad) AS contado
-      FROM conteos GROUP BY categoria
+      SELECT DISTINCT ON (categoria)
+  categoria,
+  cantidad AS contado
+FROM conteos
+ORDER BY categoria, fecha DESC
     ) c ON m.categoria=c.categoria
     GROUP BY m.categoria,c.contado
     ORDER BY m.categoria
@@ -189,6 +192,7 @@ app.get('/excel', auth, async(req,res)=>{
 
 const PORT=process.env.PORT||3000;
 app.listen(PORT,()=>console.log("Sistema avícola online"));
+
 
 
 
